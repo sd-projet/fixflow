@@ -1,0 +1,6 @@
+# Fins de ligne : indispensable pour les scripts exécutés dans les conteneurs Linux quand on clone sous Windows.
+* text=auto
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+Dockerfile text eol=lf

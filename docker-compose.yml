@@ -1,0 +1,53 @@
+# Démarrage : `docker compose up --build` (le premier lancement installe Symfony : quelques minutes).
+x-api-env: &api-env
+  DATABASE_URL: "postgresql://fixflow:fixflow@db:5432/fixflow?serverVersion=16&charset=utf8"
+  APP_ENV: dev
+  APP_SECRET: change-me-in-production
+  MESSENGER_TRANSPORT_DSN: "doctrine://default"
+
+services:
+  db:
+    image: postgres:16
+    environment: { POSTGRES_DB: fixflow, POSTGRES_USER: fixflow, POSTGRES_PASSWORD: fixflow }
+    volumes: [dbdata:/var/lib/postgresql/data]
+    ports: ["5432:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fixflow -d fixflow"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: ./fixflow-api
+    environment: { <<: *api-env, FIXFLOW_ROLE: api, FIXFLOW_SEED: "1" }
+    volumes: [./fixflow-api:/app]
+    ports: ["8000:8000"]
+    depends_on: { db: { condition: service_healthy } }
+
+  # Traitements asynchrones (Symfony Messenger) : génération des notifications.
+  worker:
+    build: ./fixflow-api
+    command: php bin/console messenger:consume async -vv --time-limit=3600
+    environment: { <<: *api-env, FIXFLOW_ROLE: worker }
+    volumes: [./fixflow-api:/app]
+    depends_on: [api]
+    restart: unless-stopped
+
+  # Automatisation : alertes d'inactivité et incidents critiques non traités (1 fois par jour).
+  alerts:
+    build: ./fixflow-api
+    command: sh -c "while true; do php bin/console app:tickets:alerts; sleep 86400; done"
+    environment: { <<: *api-env, FIXFLOW_ROLE: worker }
+    volumes: [./fixflow-api:/app]
+    depends_on: [api]
+    restart: unless-stopped
+
+  front:
+    image: node:22
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host"
+    volumes: [./fixflow-front:/app, front_modules:/app/node_modules]
+    environment: { API_URL: "http://api:8000" }
+    ports: ["5173:5173"]
+
+volumes: { dbdata: {}, front_modules: {} }

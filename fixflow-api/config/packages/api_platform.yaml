@@ -1,0 +1,16 @@
+api_platform:
+  title: FixFlow API
+  description: API de gestion des incidents et du support technique
+  version: 1.0.0
+  mapping:
+    paths: ['%kernel.project_dir%/src']
+  formats:
+    jsonld: ['application/ld+json']
+    json: ['application/json']
+  patch_formats:
+    json: ['application/merge-patch+json']
+  defaults:
+    pagination_items_per_page: 20
+    pagination_client_items_per_page: true
+    pagination_maximum_items_per_page: 100
+    stateless: false

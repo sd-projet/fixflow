@@ -1,0 +1,11 @@
+/vendor/
+/var/
+/.env.local
+/.env.*.local
+/.phpunit.result.cache
+/public/bundles/
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+###< phpunit/phpunit ###

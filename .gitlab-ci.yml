@@ -1,0 +1,74 @@
+stages: [quality, test, build]
+
+default:
+  interruptible: true
+
+# ---------- Backend ----------
+.api-base:
+  image: php:8.4-cli
+  variables:
+    POSTGRES_DB: fixflow
+    POSTGRES_USER: fixflow
+    POSTGRES_PASSWORD: fixflow
+    DATABASE_URL: "postgresql://fixflow:fixflow@postgres:5432/fixflow?serverVersion=16&charset=utf8"
+    MESSENGER_TRANSPORT_DSN: "doctrine://default"
+    APP_SECRET: ci-secret
+    COMPOSER_ALLOW_SUPERUSER: "1"
+    COMPOSER_MEMORY_LIMIT: "-1"
+  cache:
+    key: composer-$CI_COMMIT_REF_SLUG
+    paths: [fixflow-api/vendor/, .composer-cache/]
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq git unzip libpq-dev libicu-dev libzip-dev
+    - docker-php-ext-install pdo_pgsql intl zip > /dev/null
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    - export COMPOSER_CACHE_DIR="$CI_PROJECT_DIR/.composer-cache"
+    - cd fixflow-api
+    - sh bootstrap.sh
+
+api-lint:
+  extends: .api-base
+  stage: quality
+  services: [postgres:16]
+  script:
+    - for f in $(find src tests -name '*.php'); do php -l "$f" > /dev/null; done
+    - php bin/console lint:yaml config
+    - php bin/console lint:container
+    - php bin/console doctrine:schema:validate --skip-sync
+
+api-tests:
+  extends: .api-base
+  stage: test
+  services: [postgres:16]
+  variables:
+    APP_ENV: test
+  script:
+    - php bin/console doctrine:database:create --if-not-exists
+    - vendor/bin/phpunit --testdox --log-junit ../phpunit-report.xml
+  artifacts:
+    when: always
+    reports: { junit: phpunit-report.xml }
+
+# ---------- Frontend ----------
+.front-base:
+  image: node:22
+  before_script: [cd fixflow-front, npm install --no-audit --no-fund]
+  cache:
+    key: npm-$CI_COMMIT_REF_SLUG
+    paths: [fixflow-front/node_modules/]
+
+front-lint:
+  extends: .front-base
+  stage: quality
+  script: [npm run lint]
+
+front-tests:
+  extends: .front-base
+  stage: test
+  script: [npm test]
+
+front-build:
+  extends: .front-base
+  stage: build
+  script: [npm run build]
+  artifacts: { paths: [fixflow-front/dist/], expire_in: 1 week }

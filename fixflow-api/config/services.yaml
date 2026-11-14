@@ -1,0 +1,15 @@
+parameters:
+
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+
+  App\:
+    resource: '../src/'
+    exclude:
+      - '../src/Kernel.php'
+      - '../src/User/User.php'
+      - '../src/Ticket/{Ticket,TicketHistory,Attachment,TicketStatus,Priority,Category}.php'
+      - '../src/Comment/Comment.php'
+      - '../src/Notification/{Notification,TicketEvent}.php'
