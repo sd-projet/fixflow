@@ -22,7 +22,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!isForm) headers['Content-Type'] = init.method === 'PATCH' ? 'application/merge-patch+json' : 'application/json'
 
   const res = await fetch(`${API_BASE_URL}${path}`, {
-    credentials: 'same-origin',
+    credentials: 'include',
     ...init,
     headers,
   })
