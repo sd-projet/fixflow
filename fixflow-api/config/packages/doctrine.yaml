@@ -9,7 +9,7 @@ doctrine:
     naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
     auto_mapping: false
     controller_resolver:
-      auto_mapping: true
+      auto_mapping: false
     mappings:
       App:
         type: attribute
@@ -21,5 +21,5 @@ doctrine:
 when@test:
   doctrine:
     dbal:
-      # Les tests vident le schéma : ils travaillent sur une base dédiée (fixflow_test), jamais sur celle de dev.
+      # Les tests utilisent une base dédiée.
       dbname_suffix: '_test'
