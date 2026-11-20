@@ -38,17 +38,26 @@ describe('api', () => {
     await expect(api('/api/x')).rejects.toMatchObject({ status: 422, message: 'Trop court. Invalide.' })
   })
 
+
   it("expose le statut HTTP dans ApiError", async () => {
     mockFetch({ error: 'Invalid credentials.' }, { ok: false, status: 401 })
 
-    const err = await api('/api/login').catch((e: unknown) => {
-      if (!(e instanceof ApiError)) throw e
-      return e
-    })
+    let err: ApiError | undefined
+
+    try {
+      await api('/api/login')
+    } catch (e: unknown) {
+      if (e instanceof ApiError) {
+        err = e
+      } else {
+        throw e
+      }
+    }
 
     expect(err).toBeInstanceOf(ApiError)
-    expect(err.status).toBe(401)
-    expect(err.message).toBe('Invalid credentials.')
+    expect(err?.status).toBe(401)
+    expect(err?.message).toBe('Invalid credentials.')
   })
+
 
 })
