@@ -1,0 +1,22 @@
+# Image de production (Render). PHP 8.4 + FrankenPHP (serveur Caddy intégré), sans dépendances de dev.
+FROM dunglas/frankenphp:1-php8.4
+
+RUN install-php-extensions pdo_pgsql intl zip opcache @composer
+
+ENV APP_ENV=prod COMPOSER_ALLOW_SUPERUSER=1 COMPOSER_MEMORY_LIMIT=-1
+WORKDIR /app
+
+# Dépendances d'abord (meilleur cache de build). composer.json et composer.lock DOIVENT être versionnés.
+COPY composer.json composer.lock* symfony.lock* ./
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-interaction
+
+COPY . .
+RUN composer dump-autoload --no-dev --classmap-authoritative \
+ && mkdir -p var/uploads var/cache var/log \
+ && php bin/console cache:warmup --env=prod --no-debug
+
+COPY docker-entrypoint.prod.sh /usr/local/bin/fixflow-entrypoint
+RUN sed -i 's/\r$//' /usr/local/bin/fixflow-entrypoint && chmod +x /usr/local/bin/fixflow-entrypoint
+
+ENTRYPOINT ["fixflow-entrypoint"]
+CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]

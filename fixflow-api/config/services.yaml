@@ -1,4 +1,6 @@
 parameters:
+  # Derrière un proxy (Render, Vercel…), Symfony doit faire confiance à X-Forwarded-Proto pour savoir qu'on est en HTTPS.
+  env(TRUSTED_PROXIES): '127.0.0.1'
 
 services:
   _defaults:

@@ -21,7 +21,8 @@ services:
     build: ./fixflow-api
     environment: { <<: *api-env, FIXFLOW_ROLE: api, FIXFLOW_SEED: "1" }
     volumes: [./fixflow-api:/app]
-    ports: ["8000:8000"]
+    # ports: ["8000:8000"]
+    ports: ["9000:8000"]
     depends_on: { db: { condition: service_healthy } }
 
   # Traitements asynchrones (Symfony Messenger) : génération des notifications.
