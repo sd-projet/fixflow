@@ -1,5 +1,6 @@
 import type { Page } from '../types'
 
+const API_BASE_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message)
@@ -20,7 +21,12 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   // Pour un FormData, le navigateur ajoute lui-même le Content-Type (avec le « boundary »).
   if (!isForm) headers['Content-Type'] = init.method === 'PATCH' ? 'application/merge-patch+json' : 'application/json'
 
-  const res = await fetch(path, { credentials: 'same-origin', ...init, headers })
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    credentials: 'same-origin',
+    ...init,
+    headers,
+  })
+
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
     throw new ApiError(res.status, errorMessage(body, res.statusText))
