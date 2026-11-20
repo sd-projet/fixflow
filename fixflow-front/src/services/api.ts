@@ -1,6 +1,7 @@
 import type { Page } from '../types'
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
+// const API_BASE_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
+const API_BASE_URL = ''
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message)
@@ -22,7 +23,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!isForm) headers['Content-Type'] = init.method === 'PATCH' ? 'application/merge-patch+json' : 'application/json'
 
   const res = await fetch(`${API_BASE_URL}${path}`, {
-    credentials: 'include',
+    credentials: 'same-origin',
     ...init,
     headers,
   })
